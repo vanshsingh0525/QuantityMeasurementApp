@@ -6,16 +6,16 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import com.lengthmeasurement.LengthUnit;
-import com.measurement.Quantity;
-import com.volumemeasurement.VolumeUnit;
-import com.weightmeasurement.WeightUnit;
+import com.quantitymeasurement.measurement.length.LengthUnit;
+import com.quantitymeasurement.measurement.*;
+import com.quantitymeasurement.measurement.volume.VolumeUnit;
+import com.quantitymeasurement.measurement.weight.WeightUnit;
 
 public class VolumeMeasurementTest {
 	
 	 private static final double EPSILON = 0.0001;
 
-	     //  EQUALITY TESTS
+	      //  EQUALITY TESTS
 
 	    @Test
 	    void testEquality_LitreToLitre_SameValue() {
