@@ -1,97 +1,52 @@
 package com.app.quantitymeasurement.repository;
 
-import com.app.quantitymeasurement.entity.QuantityMeasurementEntity;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
+import com.app.quantitymeasurement.model.OperationType;
+import com.app.quantitymeasurement.model.QuantityMeasurementEntity;
 import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class QuantityMeasurementDatabaseRepositoryTest {
+@DataJpaTest
+class QuantityMeasurementRepositoryTest {
 
-    private QuantityMeasurementDatabaseRepository repository;
+    @Autowired
+    private QuantityMeasurementRepository repository;
 
-    @BeforeEach
-    void setUp() {
-        System.setProperty("db.url", "jdbc:h2:mem:quantitymeasurement_repo_test;DB_CLOSE_DELAY=-1");
-        System.setProperty("db.username", "sa");
-        System.setProperty("db.password", "");
-        System.setProperty("db.pool.initialSize", "1");
-        System.setProperty("db.pool.maxSize", "4");
-        System.setProperty("db.pool.connectionTimeoutMs", "2000");
+    @Test
+    void findByOperationReturnsMatchingRows() {
+        repository.save(createEntity(OperationType.COMPARE, false, "LengthUnit"));
+        repository.save(createEntity(OperationType.ADD, false, "LengthUnit"));
+        repository.save(createEntity(OperationType.COMPARE, true, "WeightUnit"));
 
-        repository = new QuantityMeasurementDatabaseRepository();
-        repository.deleteAll();
-    }
+        List<QuantityMeasurementEntity> compareRows = repository.findByOperation(OperationType.COMPARE);
 
-    @AfterEach
-    void tearDown() {
-        if (repository != null) {
-            repository.releaseResources();
-        }
-
-        System.clearProperty("db.url");
-        System.clearProperty("db.username");
-        System.clearProperty("db.password");
-        System.clearProperty("db.pool.initialSize");
-        System.clearProperty("db.pool.maxSize");
-        System.clearProperty("db.pool.connectionTimeoutMs");
+        assertEquals(2, compareRows.size());
     }
 
     @Test
-    void testSaveAndGetAllMeasurements() {
-        repository.save(new QuantityMeasurementEntity("COMPARE", "length FOOT", "true", false));
-        repository.save(new QuantityMeasurementEntity("ADD", "volume LITRE", "2.0", false));
+    void countByOperationAndErrorFalseReturnsOnlySuccessfulRows() {
+        repository.save(createEntity(OperationType.ADD, false, "LengthUnit"));
+        repository.save(createEntity(OperationType.ADD, false, "LengthUnit"));
+        repository.save(createEntity(OperationType.ADD, true, "LengthUnit"));
 
-        List<QuantityMeasurementEntity> all = repository.getAllMeasurements();
-
-        assertEquals(2, all.size());
-        assertEquals("COMPARE", all.get(0).getOperation());
+        assertEquals(2, repository.countByOperationAndErrorFalse(OperationType.ADD));
     }
 
-    @Test
-    void testGetMeasurementsByOperation() {
-        repository.save(new QuantityMeasurementEntity("COMPARE", "length FOOT", "true", false));
-        repository.save(new QuantityMeasurementEntity("ADD", "length INCH", "24.0", false));
-        repository.save(new QuantityMeasurementEntity("COMPARE", "weight KILOGRAM", "false", false));
-
-        List<QuantityMeasurementEntity> compareItems = repository.getMeasurementsByOperation("COMPARE");
-
-        assertEquals(2, compareItems.size());
-    }
-
-    @Test
-    void testGetMeasurementsByType() {
-        repository.save(new QuantityMeasurementEntity("ADD", "length FOOT", "2.0", false));
-        repository.save(new QuantityMeasurementEntity("ADD", "volume LITRE", "3.0", false));
-
-        List<QuantityMeasurementEntity> typeItems = repository.getMeasurementsByType("length");
-
-        assertEquals(1, typeItems.size());
-        assertTrue(typeItems.get(0).getInput().toLowerCase().contains("length"));
-    }
-
-    @Test
-    void testCountAndDeleteAll() {
-        repository.save(new QuantityMeasurementEntity("COMPARE", "length FOOT", "true", false));
-        repository.save(new QuantityMeasurementEntity("SUBTRACT", "length INCH", "1.5", false));
-
-        assertEquals(2, repository.getTotalCount());
-
-        repository.deleteAll();
-
-        assertEquals(0, repository.getTotalCount());
-    }
-
-    @Test
-    void testPoolStatistics() {
-        String stats = repository.getPoolStatistics();
-
-        assertTrue(stats.contains("total="));
-        assertTrue(stats.contains("active="));
-        assertTrue(stats.contains("idle="));
+    private QuantityMeasurementEntity createEntity(OperationType operationType, boolean error, String measurementType) {
+        QuantityMeasurementEntity entity = new QuantityMeasurementEntity();
+        entity.setOperation(operationType);
+        entity.setThisValue(1.0);
+        entity.setThisUnit("FOOT");
+        entity.setThisMeasurementType(measurementType);
+        entity.setThatValue(12.0);
+        entity.setThatUnit("INCH");
+        entity.setThatMeasurementType(measurementType);
+        entity.setResult("true");
+        entity.setError(error);
+        entity.setErrorMessage(error ? "Sample error" : null);
+        return entity;
     }
 }
