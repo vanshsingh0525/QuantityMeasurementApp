@@ -1,0 +1,56 @@
+server:
+  port: 8081
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: USER-SERVICE
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/quantitymeasurementapp
+    username: root
+    password: vanshriya123
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 796669911493-bbvjkhcm9a4slbv1nuekf448qkffhfb6.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - email
+              - profile
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+jwt:
+  secret: 9f8d7c6b5a4e3d2c1b0a9f8d7c6b5a4e1234567890abcdef1234567890abcdef
+  expiration: 86400000
+
+app:
+  oauth2:
+    redirect-uri: https://34.239.229.100.nip.io/dashboard
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true

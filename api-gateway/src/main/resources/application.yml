@@ -1,0 +1,97 @@
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: API-GATEWAY
+
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:4200"
+              - "http://localhost:3000"
+              - "http://localhost:5500"
+              - "http://127.0.0.1:5500"
+              - "https://34.239.229.100.nip.io"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+            maxAge: 3600
+
+      routes:
+        - id: user-service-auth
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/v1/auth/**
+
+        - id: user-service-openapi
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/docs/user-service/v3/api-docs/**
+          filters:
+            - StripPrefix=3
+
+        - id: user-service-oauth-login
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/oauth2/**
+
+        - id: user-service-oauth-callback
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/login/**
+
+        - id: measurement-service
+          uri: lb://MEASUREMENT-SERVICE
+          predicates:
+            - Path=/api/v1/quantities/**
+
+        - id: measurement-service-openapi
+          uri: lb://MEASUREMENT-SERVICE
+          predicates:
+            - Path=/api/docs/measurement-service/v3/api-docs/**
+          filters:
+            - StripPrefix=3
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /api/swagger-ui.html
+    disable-swagger-default-url: true
+    urlsPrimaryName: user-service
+    urls:
+      - name: user-service
+        url: /api/docs/user-service/v3/api-docs
+      - name: measurement-service
+        url: /api/docs/measurement-service/v3/api-docs
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
